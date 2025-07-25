@@ -1,4 +1,4 @@
-module github.com/tyspice/gpt-ui
+module github.com/tyspice/zhuzh
 
 go 1.24.5
 

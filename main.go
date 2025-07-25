@@ -1,6 +1,6 @@
 package main
 
-import "github.com/tyspice/gpt-ui/internal/ui"
+import "github.com/tyspice/zhuzh/internal/ui"
 
 func main() {
 	ui.Run()
