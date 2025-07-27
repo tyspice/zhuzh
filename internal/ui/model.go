@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -24,9 +25,10 @@ var (
 )
 
 type model struct {
-	content  string
-	ready    bool
-	viewport viewport.Model
+	content   string
+	ready     bool
+	viewport  viewport.Model
+	textInput textinput.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -39,20 +41,44 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
+	updateTextInput := func() {
+		m.textInput, cmd = m.textInput.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	updateViewport := func() {
+		m.viewport, cmd = m.viewport.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 
 		switch msg.String() {
 
-		case "q":
+		case "ctrl+c":
 			return m, tea.Quit
+		case "enter":
+			m.content = "You Wrote:" + "\n" + "\t" + m.textInput.Value() + "\n"
+			m.textInput.SetValue("")
+			m.viewport.SetContent(m.content)
+		case "up", "down":
+			updateViewport()
+		default:
+			updateTextInput()
+		}
+
+	case tea.MouseButton:
+		if msg == tea.MouseButtonWheelUp || msg == tea.MouseButtonWheelDown {
+			m.viewport, cmd = m.viewport.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 
 	case tea.WindowSizeMsg:
 		headerHeight := lipgloss.Height(m.headerView())
 		footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := headerHeight + footerHeight
+		verticalMarginHeight := headerHeight + footerHeight + lipgloss.Height(m.textInput.View())
 
 		if !m.ready {
 			// Since this program is using the full size of the viewport we
@@ -62,18 +88,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// here.
 			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.YPosition = headerHeight
-			m.viewport.SetContent(m.content)
+
+			m.textInput = textinput.New()
+			m.textInput.Focus()
+
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = msg.Height - verticalMarginHeight
 		}
+		m.viewport.SetContent(m.content)
 
 	}
-
-	// Handle keyboard and mouse events in the viewport
-	m.viewport, cmd = m.viewport.Update(msg)
-	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
@@ -82,11 +108,17 @@ func (m model) View() string {
 	if !m.ready {
 		return "\n  Initializing..."
 	}
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
+	return fmt.Sprintf(
+		"%s\n%s\n%s\n%s",
+		m.headerView(),
+		m.viewport.View(),
+		m.footerView(),
+		m.textInput.View(),
+	)
 }
 
 func (m model) headerView() string {
-	title := titleStyle.Render("Mr. Pager")
+	title := titleStyle.Render("zhuzh")
 	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
