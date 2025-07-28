@@ -56,11 +56,11 @@ func Init(opts *ConfigOption) *Config {
 	return instance
 }
 
-// Get retrieves the singleton instance. Must call Init first
-// or this function will panic
+// Get retrieves the singleton instance. If the singleton
+// has not been initialized then we initialize it without options.
 func Get() *Config {
 	if instance == nil {
-		panic("config not initialized - call Init() before accessing the config")
+		return Init(nil)
 	}
 	return instance
 }
