@@ -1,0 +1,6 @@
+# Example configuration file for zhuzh
+# Copy this to ~/.config/zhuzh/config.yml and modify as needed
+
+chatgpt:
+  api_key: "your-chatgpt-api-key-here"
+  model: "gpt-3.5-turbo"
