@@ -32,6 +32,9 @@ func Init(opts *ConfigOption) *Config {
 	once.Do(func() {
 		instance = &Config{}
 
+		// Add defaults
+		instance.ChatGPT.Model = "gpt-3.5-turbo"
+
 		// Read from YAML file first
 		homeDir, err := os.UserHomeDir()
 		if err == nil {
