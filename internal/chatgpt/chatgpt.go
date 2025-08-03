@@ -28,15 +28,10 @@ type StreamingRequest struct {
 	Stream bool   `json:"stream"`
 }
 
-func StreamResponse(prompt string) (<-chan string, <-chan error) {
+func StreamResponse(prompt string, responseChan chan<- string, errorChan chan<- error) {
 	gptConfig := config.Get().ChatGPT
 
-	responseChan := make(chan string)
-	errorChan := make(chan error, 1)
-
 	go func() {
-		defer close(responseChan)
-		defer close(errorChan)
 
 		// Prepare the request payload
 		requestBody := StreamingRequest{
@@ -116,6 +111,4 @@ func StreamResponse(prompt string) (<-chan string, <-chan error) {
 			errorChan <- fmt.Errorf("error reading response: %w", err)
 		}
 	}()
-
-	return responseChan, errorChan
 }
