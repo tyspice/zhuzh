@@ -29,14 +29,14 @@ type streamingRequest struct {
 }
 
 type Client struct {
-	Res chan string
-	Err chan error
+	res chan string
+	err chan error
 }
 
 func NewClient() *Client {
 	return &Client{
-		Res: make(chan string),
-		Err: make(chan error),
+		res: make(chan string),
+		err: make(chan error),
 	}
 }
 
@@ -48,8 +48,12 @@ func (c *Client) Close() {
 	}()
 
 	// Close both channels
-	close(c.Res)
-	close(c.Err)
+	close(c.res)
+	close(c.err)
+}
+
+func (c *Client) Subscribe() (res <-chan string, err <-chan error) {
+	return c.res, c.err
 }
 
 func (c *Client) Ask(prompt string) {
@@ -66,14 +70,14 @@ func (c *Client) Ask(prompt string) {
 
 		jsonData, err := json.Marshal(requestBody)
 		if err != nil {
-			c.Err <- fmt.Errorf("failed to marshal request: %w", err)
+			c.err <- fmt.Errorf("failed to marshal request: %w", err)
 			return
 		}
 
 		// Create HTTP request
 		req, err := http.NewRequest("POST", api.responses, bytes.NewBuffer(jsonData))
 		if err != nil {
-			c.Err <- fmt.Errorf("failed to create request: %w", err)
+			c.err <- fmt.Errorf("failed to create request: %w", err)
 			return
 		}
 
@@ -85,14 +89,14 @@ func (c *Client) Ask(prompt string) {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			c.Err <- fmt.Errorf("failed to make request: %w", err)
+			c.err <- fmt.Errorf("failed to make request: %w", err)
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			c.Err <- fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+			c.err <- fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 			return
 		}
 
@@ -125,14 +129,14 @@ func (c *Client) Ask(prompt string) {
 						Delta string `json:"delta"`
 					}
 					json.Unmarshal([]byte(line), &res)
-					c.Res <- res.Delta
+					c.res <- res.Delta
 				}
 			}
 
 		}
 
 		if err := scanner.Err(); err != nil {
-			c.Err <- fmt.Errorf("error reading response: %w", err)
+			c.err <- fmt.Errorf("error reading response: %w", err)
 		}
 	}()
 }
