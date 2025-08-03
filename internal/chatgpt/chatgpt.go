@@ -94,11 +94,6 @@ func StreamResponse(prompt string) (<-chan string, <-chan error) {
 				line = strings.TrimPrefix(line, "data: ")
 			}
 
-			// Check for end of stream
-			if line == "[DONE]" {
-				break
-			}
-
 			if strings.HasPrefix(line, "event: ") {
 				line = strings.TrimPrefix(line, "event: ")
 				nextEvent = line
