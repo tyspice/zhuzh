@@ -1,31 +1,27 @@
 package main
 
-import (
-	"fmt"
-	"os"
-
-	chatgpt "github.com/tyspice/zhuzh/internal/chatgtp"
-)
+import "github.com/tyspice/zhuzh/internal/ui"
 
 func main() {
 
-	prompt := os.Args[1]
+	ui.Run()
 
-	responseChan, errorChan := chatgpt.StreamResponse(prompt)
+	// prompt := os.Args[1]
+	// responseChan, errorChan := chatgpt.StreamResponse(prompt)
 
-	for {
-		select {
-		case resp, ok := <-responseChan:
-			if !ok {
-				fmt.Print("\n\nAll done!\n")
-				return // Channel closed, streaming finished
-			}
-			fmt.Print(resp)
-		case err := <-errorChan:
-			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return
-			}
-		}
-	}
+	// for {
+	// 	select {
+	// 	case resp, ok := <-responseChan:
+	// 		if !ok {
+	// 			fmt.Print("\n\nAll done!\n")
+	// 			return // Channel closed, streaming finished
+	// 		}
+	// 		fmt.Print(resp)
+	// 	case err := <-errorChan:
+	// 		if err != nil {
+	// 			fmt.Printf("Error: %v\n", err)
+	// 			return
+	// 		}
+	// 	}
+	// }
 }
