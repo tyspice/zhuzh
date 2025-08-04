@@ -2,12 +2,13 @@
 
 # Basic configuration
 BINARY_NAME = zhuzh
-VERSION ?= 0.1.0
 BUILD_DIR = build
 CONFIG_DIR = $(HOME)/.config/zhuzh
-INSTALL_DIR = /usr/local/bin
-# Default Go executable path
-GO ?= /usr/local/go/bin/go 
+
+# Overwrite these with environment variables if need be
+VERSION ?= 0.1.0
+INSTALL_DIR ?= /usr/local/bin
+GO ?= /usr/local/go/bin/go
 
 # Go build flags
 LDFLAGS = -ldflags "-X main.version=$(VERSION)"
@@ -89,5 +90,13 @@ help:
 	@echo "  clean          Remove build artifacts"
 	@echo "  config         Set up configuration files only"
 	@echo "  help           Show this help message"
+	@echo ""
+	@echo "Environment Variables:"
+	@echo "  VERSION        Set application version (default: $(VERSION))"
+	@echo "  INSTALL_DIR    Set installation directory (default: $(INSTALL_DIR))"
+	@echo "  GO             Set Go binary path (default: $(GO))"
+	@echo ""
+	@echo "Example:"
+	@echo "  GO=/usr/bin/go INSTALL_DIR=~/bin make install"
 	@echo ""
 	@echo "Use 'make install' to build and install the application."
