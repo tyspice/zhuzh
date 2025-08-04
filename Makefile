@@ -92,7 +92,7 @@ help:
 	@echo "  help           Show this help message"
 	@echo ""
 	@echo "Environment Variables:"
-	@echo "  ZHUZH_VERSION        Set application version (default: $(ZHUZH_VERSION))"
+	@echo "  ZHUZH_VERSION        Set application version"
 	@echo "  ZHUZH_INSTALL_DIR    Set installation directory (default: $(ZHUZH_INSTALL_DIR))"
 	@echo "  GO                   Set Go binary path (default: $(GO))"
 	@echo ""
