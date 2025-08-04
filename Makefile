@@ -1,16 +1,20 @@
 # Makefile for zhuzh - A ChatGPT TUI client
 
-# Basic configuration
 BINARY_NAME = zhuzh
 BUILD_DIR = build
 CONFIG_DIR = $(HOME)/.config/zhuzh
 
-# Overwrite these with environment variables if need be
-VERSION ?= 0.1.0
+# Get version from git tag if available, otherwise use default
+GIT_TAG := $(shell git describe --tags --abbrev=0 2>/dev/null)
+ifeq ($(GIT_TAG),)
+VERSION ?= v0.1.0
+else
+VERSION ?= $(GIT_TAG)
+endif
+
 INSTALL_DIR ?= /usr/local/bin
 GO ?= /usr/local/go/bin/go
 
-# Go build flags
 LDFLAGS = -ldflags "-X main.version=$(VERSION)"
 GOFLAGS = -trimpath
 
