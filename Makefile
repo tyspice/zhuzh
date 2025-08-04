@@ -4,14 +4,10 @@ BINARY_NAME = zhuzh
 BUILD_DIR = build
 CONFIG_DIR = $(HOME)/.config/zhuzh
 
-# Get version from git tag if available, otherwise use default
-GIT_TAG := $(shell git describe --tags --abbrev=0 2>/dev/null)
-ifeq ($(GIT_TAG),)
-VERSION ?= v0.1.0
-else
-VERSION ?= $(GIT_TAG)
-endif
+# Get version from git tag if available else current commit else "unknown"
+GIT_TAG := $(shell git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
+VERSION ?= $(GIT_TAG)
 INSTALL_DIR ?= /usr/local/bin
 GO ?= /usr/local/go/bin/go
 
