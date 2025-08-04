@@ -18,7 +18,7 @@ GOFLAGS = -trimpath
 all: build
 
 # Build the binary
-build: show-go-path
+build:
 	@if [ -z "$(GO)" ]; then \
 		echo "Error: Go is not installed or not in PATH."; \
 		echo "Please install Go from https://golang.org/dl/ and make sure it's in your PATH."; \
