@@ -7,11 +7,11 @@ CONFIG_DIR = $(HOME)/.config/zhuzh
 # Get version from git tag if available else current commit else "unknown"
 GIT_TAG := $(shell git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-VERSION ?= $(GIT_TAG)
-INSTALL_DIR ?= /usr/local/bin
+ZHUZH_VERSION ?= $(GIT_TAG)
+ZHUZH_INSTALL_DIR ?= /usr/local/bin
 GO ?= /usr/local/go/bin/go
 
-LDFLAGS = -ldflags "-X main.version=$(VERSION)"
+LDFLAGS = -ldflags "-X main.version=$(ZHUZH_VERSION)"
 GOFLAGS = -trimpath
 
 .PHONY: all build clean install uninstall config help show-go-path
@@ -31,15 +31,15 @@ build:
 
 # Install the binary and config
 install: build
-	@echo "Installing $(BINARY_NAME) to $(INSTALL_DIR)..."
+	@echo "Installing $(BINARY_NAME) to $(ZHUZH_INSTALL_DIR)..."
 	@if [ ! -f "$(BUILD_DIR)/$(BINARY_NAME)" ]; then \
 		echo "Error: Binary not found at $(BUILD_DIR)/$(BINARY_NAME)"; \
 		echo "Please make sure the build was successful before installing."; \
 		exit 1; \
 	fi
-	@mkdir -p $(INSTALL_DIR)
-	@cp $(BUILD_DIR)/$(BINARY_NAME) $(INSTALL_DIR)/$(BINARY_NAME)
-	@chmod +x $(INSTALL_DIR)/$(BINARY_NAME)
+	@mkdir -p $(ZHUZH_INSTALL_DIR)
+	@cp $(BUILD_DIR)/$(BINARY_NAME) $(ZHUZH_INSTALL_DIR)/$(BINARY_NAME)
+	@chmod +x $(ZHUZH_INSTALL_DIR)/$(BINARY_NAME)
 	@echo "Setting up configuration directory..."
 	@mkdir -p $(CONFIG_DIR)
 	@if [ ! -f $(CONFIG_DIR)/config.yml ]; then \
@@ -54,7 +54,7 @@ install: build
 # Uninstall the binary
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME)..."
-	@rm -f $(INSTALL_DIR)/$(BINARY_NAME)
+	@rm -f $(ZHUZH_INSTALL_DIR)/$(BINARY_NAME)
 	@echo "$(BINARY_NAME) has been uninstalled."
 	@echo "Note: Configuration directory $(CONFIG_DIR) has been preserved."
 	@echo "To remove it completely, run: rm -rf $(CONFIG_DIR)"
@@ -85,18 +85,18 @@ help:
 	@echo ""
 	@echo "Available Commands:"
 	@echo "  build          Build the application"
-	@echo "  install        Install the application to $(INSTALL_DIR)"
-	@echo "  uninstall      Remove the application from $(INSTALL_DIR)"
+	@echo "  install        Install the application to $(ZHUZH_INSTALL_DIR)"
+	@echo "  uninstall      Remove the application from $(ZHUZH_INSTALL_DIR)"
 	@echo "  clean          Remove build artifacts"
 	@echo "  config         Set up configuration files only"
 	@echo "  help           Show this help message"
 	@echo ""
 	@echo "Environment Variables:"
-	@echo "  VERSION        Set application version (default: $(VERSION))"
-	@echo "  INSTALL_DIR    Set installation directory (default: $(INSTALL_DIR))"
-	@echo "  GO             Set Go binary path (default: $(GO))"
+	@echo "  ZHUZH_VERSION        Set application version (default: $(ZHUZH_VERSION))"
+	@echo "  ZHUZH_INSTALL_DIR    Set installation directory (default: $(ZHUZH_INSTALL_DIR))"
+	@echo "  GO                   Set Go binary path (default: $(GO))"
 	@echo ""
 	@echo "Example:"
-	@echo "  GO=/usr/bin/go INSTALL_DIR=~/bin make install"
+	@echo "  GO=/usr/bin/go ZHUZH_INSTALL_DIR=~/bin make install"
 	@echo ""
 	@echo "Use 'make install' to build and install the application."
