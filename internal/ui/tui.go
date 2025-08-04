@@ -5,11 +5,12 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tyspice/zhuzh/internal/chatgpt"
 )
 
 func Run() {
 	p := tea.NewProgram(
-		model{},
+		model{chatClient: chatgpt.NewClient()},
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)

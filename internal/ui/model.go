@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tyspice/zhuzh/internal/models"
 )
 
 var (
@@ -24,15 +25,20 @@ var (
 	}()
 )
 
+type responseMsg struct {
+	Content string
+}
+
 type model struct {
-	content   string
-	ready     bool
-	viewport  viewport.Model
-	textInput textinput.Model
+	content    string
+	ready      bool
+	chatClient models.ChatClient
+	viewport   viewport.Model
+	textInput  textinput.Model
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return waitForActivity(m.chatClient)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -60,9 +66,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			m.content = "You Wrote:" + "\n" + "\t" + m.textInput.Value() + "\n"
+			m.content += "\n\n" + "====" + "\n\n"
+			m.chatClient.Ask(m.textInput.Value())
 			m.textInput.SetValue("")
-			m.viewport.SetContent(m.content)
+			wrappedContent := wrapText(m.content, m.viewport.Width)
+			m.viewport.SetContent(wrappedContent)
+			m.viewport.GotoBottom()
 		case "up", "down":
 			updateViewport()
 		default:
@@ -71,8 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.MouseButton:
 		if msg == tea.MouseButtonWheelUp || msg == tea.MouseButtonWheelDown {
-			m.viewport, cmd = m.viewport.Update(msg)
-			cmds = append(cmds, cmd)
+			updateViewport()
 		}
 
 	case tea.WindowSizeMsg:
@@ -88,7 +96,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// here.
 			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.YPosition = headerHeight
-
+			m.viewport.SetContent("")
 			m.textInput = textinput.New()
 			m.textInput.Focus()
 
@@ -96,9 +104,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = msg.Height - verticalMarginHeight
+			wrappedContent := wrapText(m.content, m.viewport.Width)
+			m.viewport.SetContent(wrappedContent)
 		}
-		m.viewport.SetContent(m.content)
 
+	case responseMsg:
+		m.content += msg.Content
+		wrappedContent := wrapText(m.content, m.viewport.Width)
+		m.viewport.SetContent(wrappedContent)
+		m.viewport.GotoBottom()
+		cmds = append(cmds, waitForActivity(m.chatClient))
 	}
 
 	return m, tea.Batch(cmds...)
@@ -134,4 +149,54 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func waitForActivity(c models.ChatClient) tea.Cmd {
+	return func() tea.Msg {
+		res, _ := c.Subscribe()
+		next := <-res
+		return responseMsg{Content: next}
+	}
+}
+
+func wrapText(text string, width int) string {
+	if width <= 0 {
+		return text
+	}
+
+	var wrapped strings.Builder
+	lines := strings.Split(text, "\n")
+
+	for i, line := range lines {
+		if i > 0 {
+			wrapped.WriteString("\n")
+		}
+
+		if len(line) <= width {
+			wrapped.WriteString(line)
+			continue
+		}
+
+		// Handle lines longer than width
+		currentWidth := 0
+		words := strings.Fields(line)
+		for j, word := range words {
+			wordLen := len(word)
+
+			if j == 0 {
+				wrapped.WriteString(word)
+				currentWidth = wordLen
+			} else if currentWidth+wordLen+1 > width {
+				// Start a new line
+				wrapped.WriteString("\n" + word)
+				currentWidth = wordLen
+			} else {
+				// Add word to current line
+				wrapped.WriteString(" " + word)
+				currentWidth += wordLen + 1
+			}
+		}
+	}
+
+	return wrapped.String()
 }
