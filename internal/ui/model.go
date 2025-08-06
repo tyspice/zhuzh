@@ -78,8 +78,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			updateTextInput()
 		}
 
-	case tea.MouseButton:
-		if msg == tea.MouseButtonWheelUp || msg == tea.MouseButtonWheelDown {
+	case tea.MouseMsg:
+		if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
 			updateViewport()
 		}
 
