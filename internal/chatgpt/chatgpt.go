@@ -12,7 +12,10 @@ import (
 	"github.com/tyspice/zhuzh/internal/config"
 )
 
-const baseURL string = "https://api.openai.com/v1/"
+const (
+	baseURL             string = "https://api.openai.com/v1/"
+	defaultInstructions string = "Format your response using Markdown syntax."
+)
 
 type apiEndpoints struct {
 	responses string
@@ -23,9 +26,10 @@ var api = apiEndpoints{
 }
 
 type streamingRequest struct {
-	Model  string `json:"model"`
-	Input  string `json:"input"`
-	Stream bool   `json:"stream"`
+	Model        string `json:"model"`
+	Input        string `json:"input"`
+	Stream       bool   `json:"stream"`
+	Instructions string `json:"instructions"`
 }
 
 type Client struct {
@@ -63,9 +67,10 @@ func (c *Client) Ask(prompt string) {
 
 		// Prepare the request payload
 		requestBody := streamingRequest{
-			Model:  gptConfig.Model,
-			Input:  prompt,
-			Stream: true,
+			Model:        gptConfig.Model,
+			Input:        prompt,
+			Stream:       true,
+			Instructions: defaultInstructions,
 		}
 
 		jsonData, err := json.Marshal(requestBody)
