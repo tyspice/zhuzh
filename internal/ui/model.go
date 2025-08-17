@@ -53,6 +53,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
+	setTextInputWidth := func(viewportWidth int) {
+		m.textInput.Width = viewportWidth - lipgloss.Width(m.textInput.Prompt) - 2
+		updateTextInput()
+	}
+
 	updateViewport := func() {
 		m.viewport, cmd = m.viewport.Update(msg)
 		cmds = append(cmds, cmd)
@@ -104,17 +109,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.SetContent("")
 			m.textInput = textinput.New()
 			m.textInput.Focus()
+			setTextInputWidth(msg.Width)
 
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = msg.Height - verticalMarginHeight
-			wrappedContent, err := glamorize(m.content, m.viewport.Width)
+			glamorizedContent, err := glamorize(m.content, m.viewport.Width)
 			if err != nil {
 				// TODO: handle error
 				panic(err)
 			}
-			m.viewport.SetContent(wrappedContent)
+			m.viewport.SetContent(glamorizedContent)
+			setTextInputWidth(msg.Width)
 		}
 
 	case responseMsg:
