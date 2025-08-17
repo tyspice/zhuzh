@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tyspice/zhuzh/internal/models"
 )
@@ -66,11 +67,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			m.content += "\n\n" + "====" + "\n\n"
+			m.content += "\n\n___\n" + "?: " + m.textInput.Value() + "\n___\n\n"
 			m.chatClient.Ask(m.textInput.Value())
 			m.textInput.SetValue("")
-			wrappedContent := wrapText(m.content, m.viewport.Width)
-			m.viewport.SetContent(wrappedContent)
+			glamorizedContent, err := glamorize(m.content, m.viewport.Width)
+			if err != nil {
+				// TODO: handle error
+				panic(err)
+			}
+			m.viewport.SetContent(glamorizedContent)
 			m.viewport.GotoBottom()
 		case "up", "down":
 			updateViewport()
@@ -104,14 +109,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = msg.Height - verticalMarginHeight
-			wrappedContent := wrapText(m.content, m.viewport.Width)
+			wrappedContent, err := glamorize(m.content, m.viewport.Width)
+			if err != nil {
+				// TODO: handle error
+				panic(err)
+			}
 			m.viewport.SetContent(wrappedContent)
 		}
 
 	case responseMsg:
 		m.content += msg.Content
-		wrappedContent := wrapText(m.content, m.viewport.Width)
-		m.viewport.SetContent(wrappedContent)
+		glamorizedContent, err := glamorize(m.content, m.viewport.Width)
+		if err != nil {
+			// TODO: handle error
+			panic(err)
+		}
+		m.viewport.SetContent(glamorizedContent)
 		m.viewport.GotoBottom()
 		cmds = append(cmds, waitForActivity(m.chatClient))
 	}
@@ -159,44 +172,19 @@ func waitForActivity(c models.ChatClient) tea.Cmd {
 	}
 }
 
-func wrapText(text string, width int) string {
-	if width <= 0 {
-		return text
+func glamorize(text string, width int) (string, error) {
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+		glamour.WithWordWrap(width),
+	)
+
+	if err != nil {
+		return "", err
 	}
 
-	var wrapped strings.Builder
-	lines := strings.Split(text, "\n")
-
-	for i, line := range lines {
-		if i > 0 {
-			wrapped.WriteString("\n")
-		}
-
-		if len(line) <= width {
-			wrapped.WriteString(line)
-			continue
-		}
-
-		// Handle lines longer than width
-		currentWidth := 0
-		words := strings.Fields(line)
-		for j, word := range words {
-			wordLen := len(word)
-
-			if j == 0 {
-				wrapped.WriteString(word)
-				currentWidth = wordLen
-			} else if currentWidth+wordLen+1 > width {
-				// Start a new line
-				wrapped.WriteString("\n" + word)
-				currentWidth = wordLen
-			} else {
-				// Add word to current line
-				wrapped.WriteString(" " + word)
-				currentWidth += wordLen + 1
-			}
-		}
+	glamorizedContent, err := renderer.Render(text)
+	if err != nil {
+		return "", err
 	}
-
-	return wrapped.String()
+	return glamorizedContent, nil
 }
