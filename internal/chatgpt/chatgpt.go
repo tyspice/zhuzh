@@ -63,7 +63,7 @@ func (c *Client) Subscribe() (res <-chan string, err <-chan error) {
 }
 
 func (c *Client) Ask(prompt string) {
-	gptConfig := config.Get().ChatGPT
+	gptConfig := config.GetChatGPT()
 
 	go func() {
 
