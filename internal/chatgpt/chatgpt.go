@@ -26,15 +26,17 @@ var api = apiEndpoints{
 }
 
 type streamingRequest struct {
-	Model        string `json:"model"`
-	Input        string `json:"input"`
-	Stream       bool   `json:"stream"`
-	Instructions string `json:"instructions"`
+	PreviousResponseId string `json:"previous_response_id,omitempty"`
+	Model              string `json:"model"`
+	Input              string `json:"input"`
+	Stream             bool   `json:"stream"`
+	Instructions       string `json:"instructions"`
 }
 
 type Client struct {
-	res chan string
-	err chan error
+	previousResponseId string
+	res                chan string
+	err                chan error
 }
 
 func NewClient() *Client {
@@ -71,6 +73,10 @@ func (c *Client) Ask(prompt string) {
 			Input:        prompt,
 			Stream:       true,
 			Instructions: defaultInstructions,
+		}
+
+		if c.previousResponseId != "" {
+			requestBody.PreviousResponseId = c.previousResponseId
 		}
 
 		jsonData, err := json.Marshal(requestBody)
@@ -112,24 +118,29 @@ func (c *Client) Ask(prompt string) {
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			// Skip empty lines and check for end of stream
 			if line == "" {
 				continue
 			}
 
-			// Remove "data: " prefix
-			if strings.HasPrefix(line, "data: ") {
-				line = strings.TrimPrefix(line, "data: ")
-			}
+			line = strings.TrimPrefix(line, "data: ")
 
-			if strings.HasPrefix(line, "event: ") {
-				line = strings.TrimPrefix(line, "event: ")
-				nextEvent = line
+			if after, ok := strings.CutPrefix(line, "event: "); ok {
+				nextEvent = after
 				continue
 			}
 
 			if nextEvent != "" {
-				if nextEvent == "response.output_text.delta" {
+
+				switch nextEvent {
+				case "response.created":
+					var res struct {
+						Response struct {
+							ID string `json:"id"`
+						} `json:"response"`
+					}
+					json.Unmarshal([]byte(line), &res)
+					c.previousResponseId = res.Response.ID
+				case "response.output_text.delta":
 					var res struct {
 						Delta string `json:"delta"`
 					}
