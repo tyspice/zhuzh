@@ -173,9 +173,14 @@ func max(a, b int) int {
 
 func waitForActivity(c models.ChatClient) tea.Cmd {
 	return func() tea.Msg {
-		res, _ := c.Subscribe()
-		next := <-res
-		return responseMsg{Content: next}
+		res, errChan := c.Subscribe()
+		select {
+		case next := <-res:
+			return responseMsg{Content: next}
+		case err := <-errChan:
+			// TODO: handle error
+			panic(err)
+		}
 	}
 }
 
