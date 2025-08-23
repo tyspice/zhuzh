@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/tyspice/zhuzh/internal/config"
+	"github.com/tyspice/zhuzh/internal/models"
 )
 
 const (
@@ -31,20 +32,20 @@ type streamingRequest struct {
 	Model              string `json:"model"`
 	Input              string `json:"input"`
 	Stream             bool   `json:"stream"`
-	Instructions       string `json:"instructions"`
+	Instructions       string `json:"instructions,omitempty"`
 }
 
 type Client struct {
 	previousResponseId string
 	instructions       string
-	res                chan string
+	res                chan models.ChatResponse
 	err                chan error
 	closeOnce          sync.Once
 }
 
 func NewClient() *Client {
 	return &Client{
-		res:          make(chan string),
+		res:          make(chan models.ChatResponse),
 		err:          make(chan error),
 		instructions: defaultInstructions,
 	}
@@ -57,7 +58,7 @@ func (c *Client) Close() {
 	})
 }
 
-func (c *Client) Subscribe() (res <-chan string, err <-chan error) {
+func (c *Client) Subscribe() (res <-chan models.ChatResponse, err <-chan error) {
 	return c.res, c.err
 }
 
@@ -144,7 +145,7 @@ func (c *Client) Ask(prompt string) {
 						Delta string `json:"delta"`
 					}
 					json.Unmarshal([]byte(line), &res)
-					c.res <- res.Delta
+					c.res <- models.ChatResponse{Delta: res.Delta}
 				}
 			}
 
@@ -153,6 +154,7 @@ func (c *Client) Ask(prompt string) {
 		if err := scanner.Err(); err != nil {
 			c.err <- fmt.Errorf("error reading response: %w", err)
 		}
+		c.res <- models.ChatResponse{Done: true}
 	}()
 }
 

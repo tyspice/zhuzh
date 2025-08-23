@@ -176,7 +176,7 @@ func waitForActivity(c models.ChatClient) tea.Cmd {
 		res, errChan := c.Subscribe()
 		select {
 		case next := <-res:
-			return responseMsg{Content: next}
+			return responseMsg{Content: next.Delta}
 		case err := <-errChan:
 			// TODO: handle error
 			panic(err)
