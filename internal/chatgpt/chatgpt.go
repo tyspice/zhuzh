@@ -35,14 +35,16 @@ type streamingRequest struct {
 
 type Client struct {
 	previousResponseId string
+	instructions       string
 	res                chan string
 	err                chan error
 }
 
 func NewClient() *Client {
 	return &Client{
-		res: make(chan string),
-		err: make(chan error),
+		res:          make(chan string),
+		err:          make(chan error),
+		instructions: defaultInstructions,
 	}
 }
 
@@ -72,7 +74,7 @@ func (c *Client) Ask(prompt string) {
 			Model:        gptConfig.Model,
 			Input:        prompt,
 			Stream:       true,
-			Instructions: defaultInstructions,
+			Instructions: c.instructions,
 		}
 
 		if c.previousResponseId != "" {
@@ -155,4 +157,8 @@ func (c *Client) Ask(prompt string) {
 			c.err <- fmt.Errorf("error reading response: %w", err)
 		}
 	}()
+}
+
+func (c *Client) SetInstructions(i string) {
+	c.instructions = i
 }
