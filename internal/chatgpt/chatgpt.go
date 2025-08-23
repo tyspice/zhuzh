@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/tyspice/zhuzh/internal/config"
 )
@@ -38,6 +39,7 @@ type Client struct {
 	instructions       string
 	res                chan string
 	err                chan error
+	closeOnce          sync.Once
 }
 
 func NewClient() *Client {
@@ -49,15 +51,10 @@ func NewClient() *Client {
 }
 
 func (c *Client) Close() {
-	defer func() {
-		if r := recover(); r != nil {
-			// Silently recover from "close of closed channel" panic
-		}
-	}()
-
-	// Close both channels
-	close(c.res)
-	close(c.err)
+	c.closeOnce.Do(func() {
+		close(c.res)
+		close(c.err)
+	})
 }
 
 func (c *Client) Subscribe() (res <-chan string, err <-chan error) {
