@@ -1,3 +1,4 @@
+// Package chatgpt provides functionality for interacting with the ChatGPT API.
 package chatgpt
 
 import (
@@ -28,7 +29,7 @@ var api = apiEndpoints{
 }
 
 type streamingRequest struct {
-	PreviousResponseId string `json:"previous_response_id,omitempty"`
+	PreviousResponseID string `json:"previous_response_id,omitempty"`
 	Model              string `json:"model"`
 	Input              string `json:"input"`
 	Stream             bool   `json:"stream"`
@@ -36,7 +37,7 @@ type streamingRequest struct {
 }
 
 type Client struct {
-	previousResponseId string
+	previousResponseID string
 	instructions       string
 	res                chan models.ChatResponse
 	err                chan error
@@ -66,7 +67,6 @@ func (c *Client) Ask(prompt string) {
 	gptConfig := config.GetChatGPT()
 
 	go func() {
-
 		// Prepare the request payload
 		requestBody := streamingRequest{
 			Model:        gptConfig.Model,
@@ -75,8 +75,8 @@ func (c *Client) Ask(prompt string) {
 			Instructions: c.instructions,
 		}
 
-		if c.previousResponseId != "" {
-			requestBody.PreviousResponseId = c.previousResponseId
+		if c.previousResponseID != "" {
+			requestBody.PreviousResponseID = c.previousResponseID
 		}
 
 		jsonData, err := json.Marshal(requestBody)
@@ -130,7 +130,6 @@ func (c *Client) Ask(prompt string) {
 			}
 
 			if nextEvent != "" {
-
 				switch nextEvent {
 				case "response.created":
 					var res struct {
@@ -139,7 +138,7 @@ func (c *Client) Ask(prompt string) {
 						} `json:"response"`
 					}
 					json.Unmarshal([]byte(line), &res)
-					c.previousResponseId = res.Response.ID
+					c.previousResponseID = res.Response.ID
 				case "response.output_text.delta":
 					var res struct {
 						Delta string `json:"delta"`
